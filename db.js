@@ -6,9 +6,11 @@ const getClient = async () => {
   if (client) return client;
 
   client = redis.createClient();
-  client.on("error", (error) => console.error(`Redis Error : ${error}`));
+  client.on("error", (error) => {
+    console.error(`Redis Error : ${error}`);
+  });
   await client.connect();
-  return client
+  return client;
 };
 
 module.exports = getClient;

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weatherry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+  </head>
+  <body
+    class="w-screen h-screen overflow-hidden flex flex-row justify-center items-center gap-8"
+  >
+    <form
+      method="post"
+      class="border-2 border-zinc-900 rounded p-8 flex flex-col justify-center items-center gap-4"
+    >
+      <select name="city" class="border border-zinc-900 rounded px-4 py-2">
+        <option value="Budapest">Budapest</option>
+        <option value="Győr">Győr</option>
+        <option value="Debrecen">Debrecen</option>
+        <option value="Miskolc">Miskolc</option>
+        <option value="Pécs">Pécs</option>
+        <option value="Sopron">Sopron</option>
+        <option value="Szeged">Szeged</option>
+        <option value="Gyékényes">Gyékényes</option>
+      </select>
+      <button class="bg-zinc-900 text-zinc-100 rounded px-4 py-2">
+        Check weather
+      </button>
+    </form>
+
+    <section>
+      <h1 class="text-4xl font-bold mb-4"></h1>
+      <div class="grid grid-cols-2 gap-x-8 text-lg"></div>
+    </section>
+    <script>
+      $(document).ready(function () {
+        const responseContainer = $("section > div")
+        $("form").submit(function (event) {
+          event.preventDefault();
+          $.ajax({
+            type: "POST",
+            url: "http://localhost:3000/api/weather",
+            data: $(this).serialize(),
+            success: function ({data}) {
+                $("section h1").text(data.name)
+                responseContainer.empty()
+                responseContainer.append(`<span>Last update:</span><span>${(new Date(data.dt * 1000)).toLocaleString()}</span>`)
+                responseContainer.append(`<span>Latitude / Longitude:</span><span>${data.coord.lat} / ${data.coord.lon}</span>`)
+                responseContainer.append(`<span>Temperature (Feels like):</span><span>${data.main.temp}°C (${data.main.feels_like}°C)</span>`)
+                responseContainer.append(`<span>Pressure:</span><span>${data.main.pressure} hPa</span>`)
+                responseContainer.append(`<span>Humidity:</span><span>${data.main.humidity}%</span>`)
+                responseContainer.append(`<span>Wind direction (Speed):</span><span>${data.wind.deg}° (${data.wind.speed}m/s)</span>`)
+                if(data.rain)
+                    responseContainer.append(`<span>Rain:</span><span>${data.rain["1h"]}mm</span>`)
+                responseContainer.append(`<span>Rain:</span><span>Not raining</span>`)
+                responseContainer.append(`<span>Clouds:</span><span>${data.clouds.all}%</span>`)
+            },
+            error: function ({responseJSON}) {
+                $("section h1").text("Error")
+                responseContainer.empty()
+                responseContainer.append(`<span class="col-span-2 text-red-600 bg-red-200 border-2 border-red-600 rounded px-4 py-2 font-bold">${responseJSON.data}</span>`)
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

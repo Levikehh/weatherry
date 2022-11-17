@@ -5,9 +5,8 @@ const db = require("../db");
 const CITY_DATA = require("../constants");
 
 const fetchDataFromAPI = async (city) => {
-  console.log("Fetching api");
   const { data } = await axios({
-    url: `https://api.openweathermap.org/data/2.5/weather?lat=${city.lat}&lon=${city.lon}&appid=${process.env.OPENWEATHERMAP_API_KEY}`,
+    url: `https://api.openweathermap.org/data/2.5/weather?lat=${city.lat}&lon=${city.lon}&units=metric&appid=${process.env.OPENWEATHERMAP_API_KEY}`,
     method: "GET",
   });
 
@@ -17,23 +16,20 @@ const fetchDataFromAPI = async (city) => {
 const getDataFromDB = async (city) => {
   const client = await db();
   const storedData = await client.get(city.local_names.hu.toLowerCase());
-
+  let response;
   if (!storedData) {
-    console.log("No cached data");
     response = await fetchDataFromAPI(city);
     await client.set(
       city.local_names.hu.toLowerCase(),
       JSON.stringify(response)
     );
-  }
+  } else response = JSON.parse(storedData);
 
-  let response = JSON.parse(storedData);
-  const now = Date.now()
-  const lastUpdate = response.dt * 1000
-  const timeDifference = 10 * 60 * 1000 // 10 minutes
+  const now = Date.now();
+  const lastUpdate = response.dt * 1000;
+  const timeDifference = 10 * 60 * 1000; // 10 minutes
 
-  if ((now - lastUpdate) >= timeDifference){
-    console.log("Data is outdated");
+  if (now - lastUpdate >= timeDifference) {
     response = await fetchDataFromAPI(city);
     await client.set(
       city.local_names.hu.toLowerCase(),
@@ -44,9 +40,8 @@ const getDataFromDB = async (city) => {
   return response;
 };
 
-router.get("/:city", async (req, res) => {
-  console.log("Called weather route");
-  if (!req.params.city)
+router.post("/", async (req, res) => {
+  if (!req.body.city)
     return res.status(400).json({
       status: 400,
       error: true,
@@ -54,18 +49,18 @@ router.get("/:city", async (req, res) => {
     });
 
   const selectedCity = CITY_DATA.find(
-    (city) =>
-      city.local_names.hu.toLowerCase() === req.params.city.toLowerCase()
+    (city) => city.local_names.hu.toLowerCase() === req.body.city.toLowerCase()
   );
+  
   if (!selectedCity)
     return res.status(400).json({
       status: 400,
       error: true,
-      data: `Please select another city as we don't have data for '${req.params.city}'`,
+      data: `Please select another city as we don't have data for '${req.body.city}'`,
     });
 
   const response = await getDataFromDB(selectedCity);
-  res.status(200).json({ status: 200, error: false, data: response });
+  return res.status(200).json({ status: 200, error: false, data: response });
 });
 
 module.exports = router;
