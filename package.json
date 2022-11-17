@@ -4,6 +4,7 @@
   "description": "Weather checker",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon index.js", 
     "start": "nodemon index.js > app.log 2>&1"
   },
   "keywords": [],
